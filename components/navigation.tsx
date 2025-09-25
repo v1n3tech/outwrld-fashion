@@ -1,256 +1,205 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import Link from "next/link"
-import Image from "next/image"
-import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
-import { ScrollArea } from "@/components/ui/scroll-area"
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import { Menu, ShoppingBag, Search, User, LogOut, UserCircle, Store, Package, Calendar, Info } from "lucide-react"
-import { useCart } from "@/hooks/use-cart"
-import { useAuth } from "@/hooks/use-auth"
+import Link from "next/link";
+import { usePathname, useRouter } from "next/navigation";
+import { useState } from "react";
+import Image from "next/image";
+import { Menu, X, ShoppingCart, User } from "lucide-react"; // adjust icons if needed
+import { useAuth } from "@/hooks/use-auth";
 
-export function Navigation() {
-  const [isOpen, setIsOpen] = useState(false)
-  const { itemCount, loading } = useCart()
-  const { user, profile, loading: authLoading, signOut } = useAuth()
+export default function Navigation() {
+  const pathname = usePathname();
+  const router = useRouter();
+  const { user, profile, signOut } = useAuth();
 
-  const navLinks = [
-    { href: "/shop", label: "Shop", icon: Store },
-    { href: "/collections", label: "Collections", icon: Package },
-    { href: "/events", label: "Events", icon: Calendar },
-    { href: "/about", label: "About", icon: Info },
-  ]
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const [accountOpen, setAccountOpen] = useState(false);
+
+  const toggleMobile = () => setMobileOpen((prev) => !prev);
+  const toggleAccount = () => setAccountOpen((prev) => !prev);
 
   const handleSignOut = async () => {
-    await signOut()
-    window.location.href = "/"
-  }
+    try {
+      await signOut(); // useAuth handles clearing state and hard reload
+    } catch (err) {
+      console.error("Sign out error:", err);
+      // Fallback navigation if signOut fails silently
+      if (typeof window !== "undefined") window.location.href = "/";
+    }
+  };
 
-  const MobileSidebarContent = () => (
-    <div className="flex flex-col h-full bg-background">
-      {/* Logo Section */}
-      <div className="flex items-center justify-between p-6 border-b border-border">
-        <div className="flex items-center space-x-2">
-          <div className="relative">
-            <Image
-              src="/images/outwrld-logo.png"
-              alt="Outwrld"
-              width={32}
-              height={32}
-              className="invert dark:invert-0 rounded-lg border-2 border-blue-500 p-1"
-            />
-          </div>
-          <span className="font-display text-lg font-bold text-primary">OUTWRLD</span>
-        </div>
-        <Badge variant="secondary" className="text-xs font-medium">
-          STORE
-        </Badge>
-      </div>
+  const navLinks = [
+    { label: "Home", href: "/" },
+    { label: "Shop", href: "/shop" },
+    { label: "Collections", href: "/collections" },
+    { label: "About", href: "/about" },
+  ];
 
-      <ScrollArea className="flex-1 px-3 py-4">
-        <nav className="space-y-1">
-          {navLinks.map((item) => (
-            <Link
-              key={item.href}
-              href={item.href}
-              className="group flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 text-muted-foreground hover:text-foreground hover:bg-muted/50"
-              onClick={() => setIsOpen(false)}
-            >
-              <item.icon className="h-4 w-4 transition-colors text-muted-foreground group-hover:text-foreground" />
-              <span className="truncate">{item.label}</span>
-            </Link>
-          ))}
-        </nav>
-      </ScrollArea>
-
-      {/* Footer Section */}
-      <div className="p-4 border-t border-border space-y-2">
-        {user ? (
-          <>
-            <div className="px-3 py-2 mb-2">
-              {profile?.first_name && profile?.last_name && (
-                <p className="font-medium text-sm text-foreground">
-                  {profile.first_name} {profile.last_name}
-                </p>
-              )}
-              <p className="text-xs text-muted-foreground truncate">{user.email}</p>
-            </div>
-            <Button
-              variant="ghost"
-              className="w-full justify-start text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
-              asChild
-            >
-              <Link href="/account">
-                <UserCircle className="mr-3 h-4 w-4" />
-                <span className="truncate">Account</span>
-              </Link>
-            </Button>
-            {(profile?.role === "admin" || profile?.role === "super_admin") && (
-              <Button
-                variant="ghost"
-                className="w-full justify-start text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
-                asChild
-              >
-                <Link href="/admin">
-                  <UserCircle className="mr-3 h-4 w-4" />
-                  <span className="truncate">Admin Dashboard</span>
-                </Link>
-              </Button>
-            )}
-            <Button
-              variant="ghost"
-              className="w-full justify-start text-destructive hover:text-destructive hover:bg-destructive/10 transition-colors"
-              onClick={handleSignOut}
-            >
-              <LogOut className="mr-3 h-4 w-4" />
-              <span className="truncate">Sign Out</span>
-            </Button>
-          </>
-        ) : (
-          <Button
-            variant="ghost"
-            className="w-full justify-start text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
-            asChild
-          >
-            <Link href="/auth/login">
-              <User className="mr-3 h-4 w-4" />
-              <span className="truncate">Login</span>
-            </Link>
-          </Button>
-        )}
-      </div>
-    </div>
-  )
+  const isActive = (href: string) => (pathname === href ? "text-black font-semibold" : "text-gray-600");
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="container flex h-16 max-w-screen-2xl items-center justify-between px-4">
+    <header className="border-b border-gray-200 bg-white">
+      <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
         {/* Logo */}
         <Link href="/" className="flex items-center space-x-2">
-          <div className="relative">
-            <Image
-              src="/images/outwrld-logo.png"
-              alt="Outwrld"
-              width={48}
-              height={48}
-              className="invert rounded-lg border-2 border-blue-500 p-1"
-            />
-          </div>
-          <span className="font-display text-xl font-bold text-primary">OUTWRLD</span>
+          <Image src="/logo.svg" alt="Outwrld Fashion" width={32} height={32} />
+          <span className="font-bold text-xl">Outwrld</span>
         </Link>
 
-        {/* Desktop Navigation */}
+        {/* Desktop Nav */}
         <nav className="hidden md:flex items-center space-x-8">
           {navLinks.map((link) => (
             <Link
               key={link.href}
               href={link.href}
-              className="text-sm font-medium text-foreground/80 transition-colors hover:text-primary"
+              className={`transition-colors hover:text-black ${isActive(link.href)}`}
             >
               {link.label}
             </Link>
           ))}
         </nav>
 
-        {/* Actions */}
+        {/* Right side (cart + account) */}
         <div className="flex items-center space-x-4">
-          <Button variant="ghost" size="icon" className="hidden sm:flex">
-            <Search className="h-4 w-4" />
-            <span className="sr-only">Search</span>
-          </Button>
+          <Link href="/cart" className="relative group">
+            <ShoppingCart className="h-6 w-6 text-gray-700 group-hover:text-black transition-colors" />
+            {/* TODO: add badge for cart items if needed */}
+          </Link>
 
-          {authLoading ? (
-            <Button variant="ghost" size="icon" disabled>
-              <User className="h-4 w-4" />
-              <span className="sr-only">Account</span>
-            </Button>
-          ) : user ? (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon">
-                  <User className="h-4 w-4" />
-                  <span className="sr-only">Account menu</span>
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-56">
-                <div className="flex items-center justify-start gap-2 p-2">
-                  <div className="flex flex-col space-y-1 leading-none">
-                    {profile?.first_name && profile?.last_name && (
-                      <p className="font-medium text-sm">
-                        {profile.first_name} {profile.last_name}
+          {/* Account menu */}
+          <div className="relative">
+            <button
+              onClick={toggleAccount}
+              className="p-1 rounded-full hover:bg-gray-100 transition-colors focus:outline-none"
+              aria-label="Account menu"
+            >
+              <User className="h-6 w-6 text-gray-700" />
+            </button>
+
+            {accountOpen && (
+              <div
+                className="absolute right-0 mt-2 w-48 origin-top-right rounded-xl border border-gray-200 bg-white shadow-lg z-50"
+                onMouseLeave={() => setAccountOpen(false)}
+              >
+                <div className="py-2">
+                  {user ? (
+                    <>
+                      <p className="px-4 py-2 text-sm text-gray-600">
+                        {profile?.first_name
+                          ? `Hi, ${profile.first_name}`
+                          : user.email}
                       </p>
-                    )}
-                    <p className="w-[200px] truncate text-xs text-muted-foreground">{user.email}</p>
-                  </div>
+                      <Link
+                        href="/account"
+                        className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                      >
+                        Account
+                      </Link>
+                      {profile?.role === "admin" || profile?.role === "super_admin" ? (
+                        <Link
+                          href="/admin"
+                          className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                        >
+                          Admin
+                        </Link>
+                      ) : null}
+                      <button
+                        onClick={handleSignOut}
+                        className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100"
+                      >
+                        Sign out
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      <Link
+                        href="/auth/login"
+                        className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                      >
+                        Sign in
+                      </Link>
+                      <Link
+                        href="/auth/register"
+                        className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                      >
+                        Create account
+                      </Link>
+                    </>
+                  )}
                 </div>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem asChild>
-                  <Link href="/account" className="flex items-center">
-                    <UserCircle className="mr-2 h-4 w-4" />
-                    Account
-                  </Link>
-                </DropdownMenuItem>
-                {(profile?.role === "admin" || profile?.role === "super_admin") && (
-                  <DropdownMenuItem asChild>
-                    <Link href="/admin" className="flex items-center">
-                      <UserCircle className="mr-2 h-4 w-4" />
-                      Admin Dashboard
-                    </Link>
-                  </DropdownMenuItem>
-                )}
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={handleSignOut} className="text-destructive focus:text-destructive">
-                  <LogOut className="mr-2 h-4 w-4" />
-                  Logout
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          ) : (
-            <Button variant="ghost" size="icon" asChild>
-              <Link href="/auth/login">
-                <User className="h-4 w-4" />
-                <span className="sr-only">Login</span>
-              </Link>
-            </Button>
-          )}
+              </div>
+            )}
+          </div>
 
-          <Button variant="ghost" size="icon" className="relative" asChild>
-            <Link href="/cart">
-              <ShoppingBag className="h-4 w-4" />
-              {!loading && itemCount > 0 && (
-                <Badge
-                  variant="secondary"
-                  className="absolute -right-2 -top-2 h-5 w-5 rounded-full p-0 text-xs bg-primary text-primary-foreground"
-                >
-                  {itemCount > 99 ? "99+" : itemCount}
-                </Badge>
-              )}
-              <span className="sr-only">Shopping cart</span>
-            </Link>
-          </Button>
-
-          <Sheet open={isOpen} onOpenChange={setIsOpen}>
-            <SheetTrigger asChild>
-              <Button variant="ghost" size="icon" className="md:hidden">
-                <Menu className="h-4 w-4" />
-                <span className="sr-only">Toggle menu</span>
-              </Button>
-            </SheetTrigger>
-            <SheetContent side="right" className="w-[300px] sm:w-[320px] p-0 bg-background">
-              <MobileSidebarContent />
-            </SheetContent>
-          </Sheet>
+          {/* Mobile menu button */}
+          <button
+            onClick={toggleMobile}
+            className="md:hidden p-1 rounded-md hover:bg-gray-100 transition-colors focus:outline-none"
+            aria-label="Toggle menu"
+          >
+            {mobileOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+          </button>
         </div>
       </div>
+
+      {/* Mobile Nav */}
+      {mobileOpen && (
+        <nav className="md:hidden border-t border-gray-200 bg-white">
+          <div className="px-2 pt-2 pb-3 space-y-1">
+            {navLinks.map((link) => (
+              <Link
+                key={link.href}
+                href={link.href}
+                onClick={() => setMobileOpen(false)}
+                className={`block rounded-md px-3 py-2 text-base font-medium transition-colors hover:bg-gray-50 ${isActive(
+                  link.href
+                )}`}
+              >
+                {link.label}
+              </Link>
+            ))}
+            <div className="border-t border-gray-200 mt-2 pt-2">
+              {user ? (
+                <>
+                  <Link
+                    href="/account"
+                    onClick={() => setMobileOpen(false)}
+                    className="block px-3 py-2 text-base font-medium text-gray-700 hover:bg-gray-50"
+                  >
+                    Account
+                  </Link>
+                  <button
+                    onClick={async () => {
+                      setMobileOpen(false);
+                      await handleSignOut();
+                    }}
+                    className="block w-full text-left px-3 py-2 text-base font-medium text-red-600 hover:bg-gray-50"
+                  >
+                    Sign out
+                  </button>
+                </>
+              ) : (
+                <>
+                  <Link
+                    href="/auth/login"
+                    onClick={() => setMobileOpen(false)}
+                    className="block px-3 py-2 text-base font-medium text-gray-700 hover:bg-gray-50"
+                  >
+                    Sign in
+                  </Link>
+                  <Link
+                    href="/auth/register"
+                    onClick={() => setMobileOpen(false)}
+                    className="block px-3 py-2 text-base font-medium text-gray-700 hover:bg-gray-50"
+                  >
+                    Create account
+                  </Link>
+                </>
+              )}
+            </div>
+          </div>
+        </nav>
+      )}
     </header>
-  )
+  );
 }
