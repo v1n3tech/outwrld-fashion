@@ -42,6 +42,7 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
+    
     <html lang="en">
       <body className={`font-sans ${aldrich.variable} ${abel.variable} ${orbitron.variable} antialiased`}>
         <AuthProvider>
