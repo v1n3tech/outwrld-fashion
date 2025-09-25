@@ -53,12 +53,8 @@ export function ProductCard({ product }: ProductCardProps) {
 
         <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-300" />
 
-        <div className="absolute bottom-3 left-3 right-3 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity duration-300">
-          <Button
-            size="sm"
-            className="w-full bg-primary text-primary-foreground hover:bg-primary/90 shadow-lg md:shadow-none"
-            asChild
-          >
+        <div className="absolute bottom-3 left-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+          <Button size="sm" className="w-full bg-primary text-primary-foreground hover:bg-primary/90" asChild>
             <Link href={`/products/${product.slug}`}>Quick View</Link>
           </Button>
         </div>
