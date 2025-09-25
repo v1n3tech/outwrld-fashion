@@ -9,6 +9,7 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
 import { Badge } from "@/components/ui/badge"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { createBrowserClient } from "@supabase/ssr"
+import { useAuth } from "@/hooks/use-auth"
 import {
   LayoutDashboard,
   Package,
@@ -67,6 +68,7 @@ export function AdminSidebar() {
   const pathname = usePathname()
   const [isOpen, setIsOpen] = useState(false)
   const orderCount = useOrderCount()
+  const { signOut } = useAuth()
 
   const navigation = [
     {
@@ -128,13 +130,13 @@ export function AdminSidebar() {
   ]
 
   const handleSignOut = async () => {
-    const supabase = createBrowserClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    )
-
-    await supabase.auth.signOut()
-    window.location.href = "/auth/login"
+    try {
+      await signOut()
+      window.location.href = "/"
+    } catch (error) {
+      console.error("Error signing out:", error)
+      window.location.href = "/auth/login"
+    }
   }
 
   const SidebarContent = () => (
